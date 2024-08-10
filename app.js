@@ -45,12 +45,21 @@ const appointmentSchema = new mongoose.Schema({
   description: String
 });
 
+//food item schema
+const foodItemSchema = new mongoose.Schema({
+  foodType: String,
+  weightPounds: Number,
+  appointmentID: String
+});
+
 
 //------------- MODELS ---------------
 // user model
 const User = mongoose.model("User", userSchema, "donors");
 // appointment model
 const Appointment = mongoose.model("Appointment", appointmentSchema, "appointments");
+// food item model
+const FoodItem = mongoose.model("FoodItem", foodItemSchema, "foodItems");
 // sample model
 const Item = mongoose.model('Item', itemSchema, "donors");
 
@@ -106,6 +115,33 @@ app.post('/create-appointment', async (req, res) => {
     res.status(500).send(error.message);
   }
 });
+
+
+// endpoint to create new food items
+app.post('/create-food-items', async (req, res) => {
+  try {
+      const { appointmentID, foodInfo } = req.body;
+
+      if (!Array.isArray(foodInfo)) {
+          return res.status(400).send("foodInfo should be an array");
+      }
+
+      // Prepare an array of food item documents to be inserted
+      const foodItemsToInsert = foodInfo.map(item => ({
+          foodType: item.food,
+          weightPounds: item.weight,
+          appointmentID: appointmentID
+      }));
+
+      // Insert the food items into the collection
+      const savedFoodItems = await FoodItem.insertMany(foodItemsToInsert);
+
+      res.json(savedFoodItems);
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
 
 // endpoint to get all appointments for a user
 app.get('/get-appointments', async (req, res) => {
