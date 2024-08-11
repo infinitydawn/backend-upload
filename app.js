@@ -116,6 +116,7 @@ app.post('/create-appointment', async (req, res) => {
   }
 });
 
+// TODO get food items for a appointment id
 
 // endpoint to create new food items
 app.post('/create-food-items', async (req, res) => {
@@ -153,6 +154,47 @@ app.get('/get-appointments', async (req, res) => {
     res.status(500).send(error.message);
   }
 });
+
+
+// endpoint to get all food items per an appointment
+app.get('/get-food-items', async (req, res) => {
+  try {
+    const appntmtID = req.query.appntmtID;
+    const foodItem = await FoodItem.find({ appointmentID: appntmtID });
+    res.json(foodItem);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// endpoint to get a list of all food types with the combined weight
+app.get('/get-food-types-summary', async (req, res) => {
+  try {
+    const foodSummary = await FoodItem.aggregate([
+      {
+        $group: {
+          _id: "$foodType", // Group by foodType
+          totalWeight: { $sum: "$weightPounds" } // Sum the weightPounds
+        }
+      },
+      {
+        $project: {
+          _id: 0, // Exclude the _id field from the output
+          foodType: "$_id", // Rename _id to foodType
+          totalWeight: 1 // Include the totalWeight field
+        }
+      },
+      {
+        $sort: { totalWeight: -1 } // Sort by totalWeight in descending order (optional)
+      }
+    ]);
+
+    res.json(foodSummary);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 
 
 
